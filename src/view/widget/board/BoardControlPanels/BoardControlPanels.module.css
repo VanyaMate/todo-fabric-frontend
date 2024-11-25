@@ -1,0 +1,15 @@
+.container {
+    position      : fixed;
+    top           : var(--offset-medium);
+    padding       : var(--offset-medium);
+    border-radius : var(--offset-medium);
+    z-index       : 1;
+
+    &.left {
+        left : var(--offset-medium);
+    }
+
+    &.right {
+        right : var(--offset-medium);
+    }
+}
