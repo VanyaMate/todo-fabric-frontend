@@ -1,0 +1,3 @@
+export const BOARD_LOCALSTORAGE_PREFIX = 'board';
+
+export const BOARD_LOCALSTORAGE_TODOS = `${ BOARD_LOCALSTORAGE_PREFIX }__todos`;

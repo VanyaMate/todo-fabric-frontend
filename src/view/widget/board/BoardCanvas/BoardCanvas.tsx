@@ -13,60 +13,100 @@ import {
 } from '@/view/widget/board/Board/hooks/useScrollByMouseDrag.ts';
 import * as fabric from 'fabric';
 import { useStore } from '@vanyamate/sec-react';
-import { $boardMode } from '@/model/board/board.model.ts';
+import {
+    $boardMode,
+    $boardTodos,
+    $boardUsers,
+    changeBoardUserPositionEffect,
+} from '@/model/board/board.model.ts';
 import { BoardMode } from '@/model/board/types/board.model.types.ts';
+import {
+    BoardCanvasUserItem,
+} from '@/view/widget/board/BoardCanvasUserItem/BoardCanvasUserItem.tsx';
+import {
+    BoardCanvasTodoItem,
+} from '@/view/widget/board/BoardCanvasTodoItem/BoardCanvasTodoItem.tsx';
 
 
 export type BoardCanvasProps =
     {
         scrollContainerRef: RefObject<HTMLElement>;
-        // add info about all
     }
     & ComponentPropsWithoutRef<'canvas'>;
 
 export const BoardCanvas: FC<BoardCanvasProps> = memo(function BoardCanvas (props) {
     const { className, width, height, scrollContainerRef } = props;
     const boardMode                                        = useStore($boardMode);
+    const boardUsers                                       = useStore($boardUsers);
+    const boardTodos                                       = useStore($boardTodos);
     const [ blockScroll, setBlockScroll ]                  = useState<boolean>(false);
     const canvasRef                                        = useRef<HTMLCanvasElement>(null);
     const containerRef                                     = useRef<HTMLDivElement>(null);
-    const fabricCanvas                                     = useRef<fabric.Canvas | null>(null);
+    const [ fabricCanvas, setFabricCanvas ]                = useState<fabric.Canvas | null>(null);
 
     useScrollByMouseDrag(containerRef, scrollContainerRef, blockScroll || boardMode === BoardMode.SELECTION);
 
     useLayoutEffect(() => {
         if (canvasRef.current) {
-            fabricCanvas.current = new fabric.Canvas(canvasRef.current, {
+            const fabricCanvas = new fabric.Canvas(canvasRef.current, {
                 selection: boardMode === BoardMode.SELECTION,
             });
 
-            fabricCanvas.current!.on('selection:created', () => setBlockScroll(true));
-            fabricCanvas.current!.on('selection:cleared', () => setBlockScroll(false));
+            setFabricCanvas(fabricCanvas);
 
-            const interval = setInterval(() => {
-                const rect = new fabric.Rect({
-                    top   : 100,
-                    left  : 100,
-                    width : 50,
-                    height: 100,
-                    fill  : 'red',
-                });
-                fabricCanvas.current!.add(rect);
-            }, 1000);
+            fabricCanvas.on('selection:created', () => setBlockScroll(true));
+            fabricCanvas.on('selection:cleared', () => setBlockScroll(false));
 
             return () => {
-                fabricCanvas.current!.dispose();
-                clearInterval(interval);
+                fabricCanvas.dispose();
             };
         }
     }, []);
 
     useLayoutEffect(() => {
-        const canvas = fabricCanvas.current;
-        if (canvas) {
-            canvas.selection = boardMode === BoardMode.SELECTION;
+        if (fabricCanvas) {
+            fabricCanvas.selection = boardMode === BoardMode.SELECTION;
         }
     }, [ boardMode ]);
+
+    useLayoutEffect(() => {
+        const ref = containerRef.current;
+        if (ref) {
+            const movehandler  = function (e: MouseEvent) {
+                changeBoardUserPositionEffect('test-1', {
+                    top: e.layerY, left: e.layerX,
+                });
+            };
+            const clickhandler = function () {
+                /*                const id = Math.random().toString(16);
+                 createBoardTodoLocalstorageEffect({
+                 todo    : {
+                 id         : id,
+                 title      : `todo-${ id }`,
+                 description: `description for ${ id }`,
+                 dueTime    : Date.now() + 60000,
+                 createdTime: Date.now(),
+                 status     : DomainTodoStatus.PENDING,
+                 },
+                 position: {
+                 top     : e.layerY,
+                 left    : e.layerX,
+                 rotation: 0,
+                 },
+                 size    : {
+                 width : 300,
+                 height: 200,
+                 },
+                 });*/
+            };
+            ref.addEventListener('mousemove', movehandler);
+            ref.addEventListener('click', clickhandler);
+            return () => {
+                ref.removeEventListener('mousemove', movehandler);
+                ref.removeEventListener('click', clickhandler);
+            };
+        }
+    }, []);
 
     return (
         <div ref={ containerRef } className={ css.container }>
@@ -76,6 +116,28 @@ export const BoardCanvas: FC<BoardCanvasProps> = memo(function BoardCanvas (prop
                 className={ className }
                 ref={ canvasRef }
             ></canvas>
+            {
+                fabricCanvas
+                ? Object.keys(boardUsers).map((key) => (
+                    <BoardCanvasUserItem
+                        fabricCanvas={ fabricCanvas }
+                        userId={ key }
+                        key={ `user-${ key }` }
+                    />
+                ))
+                : null
+            }
+            {
+                fabricCanvas
+                ? Object.keys(boardTodos).map((key) => (
+                    <BoardCanvasTodoItem
+                        fabricCanvas={ fabricCanvas }
+                        todoId={ key }
+                        key={ `todo-${ key }` }
+                    />
+                ))
+                : null
+            }
         </div>
     );
 });

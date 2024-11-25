@@ -5,6 +5,9 @@ import {
     BoardControlPanels,
 } from '@/view/widget/board/BoardControlPanels/BoardControlPanels.tsx';
 import { BoardCanvas } from '@/view/widget/board/BoardCanvas/BoardCanvas.tsx';
+import {
+    BoardTodoContainer,
+} from '@/view/widget/board/BoardTodoContainer/BoardTodoContainer.tsx';
 
 
 export type BoardProps =
@@ -34,6 +37,7 @@ export const Board: FC<BoardProps> = memo(function Board (props) {
              ref={ scrollContainerRef }
         >
             <BoardControlPanels/>
+            <BoardTodoContainer/>
             <BoardCanvas
                 width={ boardWidth }
                 height={ boardHeight }
